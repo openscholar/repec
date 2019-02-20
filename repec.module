@@ -8,7 +8,6 @@
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
-use Drupal\node\Entity\Node;
 use Drupal\repec\Repec;
 
 /**
@@ -34,14 +33,14 @@ function repec_help($route_name, RouteMatchInterface $route_match) {
  * Implements hook_entity_insert().
  */
 function repec_entity_insert(EntityInterface $entity) {
+  if (!$entity instanceof ContentEntityInterface) {
+    return;
+  }
+
   /** @var \Drupal\repec\RepecInterface $repec */
   $repec = \Drupal::service('repec');
-  // @todo remove limitation to node while covering other entity types
-  if ($entity->getEntityTypeId() === 'node' && $repec->isBundleEnabled($entity)) {
-    assert($entity instanceof Node);
-    if ($repec->isEntityShareable($entity)) {
-      $repec->createEntityTemplate($entity, Repec::SERIES_WORKING_PAPER);
-    }
+  if ($repec->isEntityShareable($entity)) {
+    $repec->createEntityTemplate($entity, Repec::SERIES_WORKING_PAPER);
   }
 }
 
@@ -49,17 +48,17 @@ function repec_entity_insert(EntityInterface $entity) {
  * Implements hook_entity_update().
  */
 function repec_entity_update(EntityInterface $entity) {
+  if (!$entity instanceof ContentEntityInterface) {
+    return;
+  }
+
   /** @var \Drupal\repec\RepecInterface $repec */
   $repec = \Drupal::service('repec');
-  // @todo remove limitation to node while covering other entity types
-  if ($entity->getEntityTypeId() === 'node' && $repec->isBundleEnabled($entity)) {
-    assert($entity instanceof Node);
-    if ($repec->isEntityShareable($entity)) {
-      $repec->updateEntityTemplate($entity, Repec::SERIES_WORKING_PAPER);
-    }
-    else {
-      $repec->deleteEntityTemplate($entity);
-    }
+  if ($repec->isEntityShareable($entity)) {
+    $repec->updateEntityTemplate($entity, Repec::SERIES_WORKING_PAPER);
+  }
+  else {
+    $repec->deleteEntityTemplate($entity);
   }
 }
 
@@ -67,13 +66,13 @@ function repec_entity_update(EntityInterface $entity) {
  * Implements hook_entity_delete().
  */
 function repec_entity_delete(EntityInterface $entity) {
+  if (!$entity instanceof ContentEntityInterface) {
+    return;
+  }
+
   /** @var \Drupal\repec\RepecInterface $repec */
   $repec = \Drupal::service('repec');
-  // @todo remove limitation to node while covering other entity types
-  if ($entity->getEntityTypeId() === 'node' && $repec->isBundleEnabled($entity)) {
-    assert($entity instanceof Node);
-    $repec->deleteEntityTemplate($entity);
-  }
+  $repec->deleteEntityTemplate($entity);
 }
 
 /**
@@ -96,3 +95,4 @@ function repec_repec_series_mapping() {
 function repec_repec_archive_mapping() {
   // @todo implement
 }
+
