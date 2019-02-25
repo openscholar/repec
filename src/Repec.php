@@ -633,9 +633,11 @@ EOF;
    */
   public function availableSeries() {
     return [
-      // The series list is subject to be extended
-      // but currently limited to wpaper.
       RepecInterface::SERIES_WORKING_PAPER => t('Paper series'),
+      RepecInterface::SERIES_JOURNAL_ARTICLE => t('Journal article series'),
+      RepecInterface::SERIES_BOOK => t('Book series'),
+      RepecInterface::SERIES_BOOK_CHAPTER => t('Book chapter series'),
+      RepecInterface::SERIES_SOFTWARE_COMPONENT => t('Software component series'),
     ];
   }
 
@@ -729,6 +731,7 @@ EOF;
       'enabled',
       'serie_type',
       'serie_name',
+      'is_different_serie_directory',
       'serie_directory',
       'restriction_by_field',
       'restriction_field',
@@ -748,6 +751,7 @@ EOF;
     $defaults['enabled'] = FALSE;
     $defaults['serie_type'] = '';
     $defaults['serie_name'] = '';
+    $defaults['is_different_serie_directory'] = TRUE;
     $defaults['serie_directory'] = '';
     $defaults['restriction_by_field'] = '';
     $defaults['restriction_field'] = '';

@@ -131,23 +131,22 @@ class EntityTypeSettingsForm extends FormBase {
         ],
       ],
     ];
+    $form['serie']['is_different_serie_directory'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Use directory name from series'),
+      '#default_value' => $this->repec->getEntityBundleSettings('is_different_serie_directory', $entity_type_id, $bundle),
+    ];
     $form['serie']['serie_directory'] = [
       '#type' => 'textfield',
       '#title' => t('Templates directory for this serie'),
       '#description' => t('It must have exactly six letters. Currently limited to Working Paper so defaulting to "wpaper"'),
       '#maxlength' => 6,
       '#size' => 6,
-      // The serie_directory is currently not configurable because
-      // it is hardcoded as a default value in the
-      // RepecInterface::getSeriesTemplate()
-      // due to the current limitation to working papers.
-      // '#default_value' => $repec->getEntityBundleSettings
-      // ('serie_directory', $entity_type_id, $bundle),.
-      '#default_value' => RepecInterface::SERIES_WORKING_PAPER,
-      '#disabled' => TRUE,
+      '#default_value' => $this->repec->getEntityBundleSettings('serie_directory', $entity_type_id, $bundle),
       '#states' => [
         'visible' => [
           ':input[name="enabled"]' => ['checked' => TRUE],
+          ':input[name="is_different_serie_directory"]' => ['checked' => FALSE],
         ],
         'required' => [
           ':input[name="enabled"]' => ['checked' => TRUE],
@@ -283,6 +282,10 @@ class EntityTypeSettingsForm extends FormBase {
           $settings[$setting] = is_array($values[$setting]) ? array_keys(array_filter($values[$setting])) : $values[$setting];
         }
       }
+    }
+
+    if ($form_state->getValue('is_different_serie_directory')) {
+      $settings['serie_directory'] = $form_state->getValue('serie_type');
     }
     $this->repec->setEntityBundleSettings($settings, $storage['entity_type_id'], $storage['bundle']);
     $this->repec->createSeriesTemplate();

@@ -16,6 +16,10 @@ interface RepecInterface {
   const TEMPLATE_SERIES = 'seri';
 
   const SERIES_WORKING_PAPER = 'wpaper';
+  const SERIES_JOURNAL_ARTICLE = 'journl';
+  const SERIES_SOFTWARE_COMPONENT = 'eccode';
+  const SERIES_BOOK = 'ecbook';
+  const SERIES_BOOK_CHAPTER = 'ecchap';
 
   /**
    * Returns the archive directory.
