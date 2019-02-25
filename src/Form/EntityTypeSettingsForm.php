@@ -196,7 +196,7 @@ class EntityTypeSettingsForm extends FormBase {
       $fieldOptions[$fieldName] = $fieldDefinition->getLabel();
     }
 
-    $repecTemplateFields = $this->repec->getTemplateFields(RepecInterface::SERIES_WORKING_PAPER);
+    $repecTemplateFields = $this->repec->getTemplateFields($this->repec->getEntityBundleSettings('serie_type', $entity_type_id, $bundle));
 
     $form['template_field_mapping'] = [
       '#type' => 'fieldset',

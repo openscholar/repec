@@ -509,6 +509,47 @@ EOF;
           'keywords' => t('Keywords'),
         ];
         break;
+
+      case RepecInterface::SERIES_JOURNAL_ARTICLE:
+        $result = [
+          'author_name' => t('Author-Name'),
+          'abstract' => t('Abstract'),
+          'creation_date' => t('Creation-Date'),
+          'file_url' => t('File-URL'),
+          'keywords' => t('Keywords'),
+        ];
+        break;
+
+      case RepecInterface::SERIES_BOOK:
+        $result = [
+          'author_name' => t('Author-Name'),
+          'provider_name' => t('Provider-Name'),
+          'abstract' => t('Abstract'),
+          'creation_date' => t('Creation-Date'),
+          'file_url' => t('File-URL'),
+          'keywords' => t('Keywords'),
+        ];
+        break;
+
+      case RepecInterface::SERIES_BOOK_CHAPTER:
+        $result = [
+          'author_name' => t('Author-Name'),
+          'abstract' => t('Abstract'),
+          'creation_date' => t('Creation-Date'),
+          'file_url' => t('File-URL'),
+          'keywords' => t('Keywords'),
+        ];
+        break;
+
+      case RepecInterface::SERIES_SOFTWARE_COMPONENT:
+        $result = [
+          'author_name' => t('Author-Name'),
+          'abstract' => t('Abstract'),
+          'creation_date' => t('Creation-Date'),
+          'file_url' => t('File-URL'),
+          'keywords' => t('Keywords'),
+        ];
+        break;
     }
     return $result;
   }
@@ -740,6 +781,7 @@ EOF;
       'creation_date',
       'file_url',
       'keywords',
+      'provider_name',
     ];
   }
 
@@ -760,6 +802,7 @@ EOF;
     $defaults['creation_date'] = '';
     $defaults['file_url'] = '';
     $defaults['keywords'] = '';
+    $defaults['provider_name'] = '';
     return $defaults;
   }
 
