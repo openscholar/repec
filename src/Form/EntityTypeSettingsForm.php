@@ -2,30 +2,87 @@
 
 namespace Drupal\repec\Form;
 
+use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\repec\RepecInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Node type settings form.
+ * Entity type settings form.
  */
-class NodeTypeSettingsForm extends FormBase {
+class EntityTypeSettingsForm extends FormBase {
 
   /**
-   * {@inheritdoc}
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  public function getFormId() {
-    return 'repec_node_type_form';
+  protected $entityTypeManager;
+
+  /**
+   * Repec service.
+   *
+   * @var \Drupal\repec\RepecInterface
+   */
+  protected $repec;
+
+  /**
+   * Messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
+   * Entity field manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
+   */
+  protected $entityFieldManager;
+
+  /**
+   * EntityTypeSettingsForm constructor.
+   *
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   Entity type manager.
+   * @param \Drupal\repec\RepecInterface $repec
+   *   Repec service.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   Messenger service.
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager
+   *   Entity field manager.
+   */
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, RepecInterface $repec, MessengerInterface $messenger, EntityFieldManagerInterface $entity_field_manager) {
+    $this->entityTypeManager = $entity_type_manager;
+    $this->repec = $repec;
+    $this->messenger = $messenger;
+    $this->entityFieldManager = $entity_field_manager;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $node_type = NULL) {
-    /** @var \Drupal\repec\RepecInterface $repec */
-    $repec = \Drupal::service('repec');
+  public static function create(ContainerInterface $container) {
+    return new static($container->get('entity_type.manager'), $container->get('repec'), $container->get('messenger'), $container->get('entity_field.manager'));
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFormId() {
+    return 'repec_entity_type_form';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildForm(array $form, FormStateInterface $form_state, $entity_type_id = NULL, $bundle = NULL) {
     $storage = [
-      'node_type' => $node_type,
+      'entity_type_id' => $entity_type_id,
+      'bundle' => $bundle,
     ];
     $form_state->setStorage($storage);
 
@@ -33,8 +90,8 @@ class NodeTypeSettingsForm extends FormBase {
     // @todo check system wide settings first
     $form['enabled'] = [
       '#type' => 'checkbox',
-      '#title' => t('Enable RePEc for this content type'),
-      '#default_value' => $repec->getEntityBundleSettings('enabled', 'node', $node_type),
+      '#title' => t('Enable RePEc'),
+      '#default_value' => $this->repec->getEntityBundleSettings('enabled', $entity_type_id, $bundle),
     ];
 
     $form['serie'] = [
@@ -49,8 +106,8 @@ class NodeTypeSettingsForm extends FormBase {
     $form['serie']['serie_type'] = [
       '#type' => 'select',
       '#title' => t('Series'),
-      '#options' => $repec->availableSeries(),
-      '#default_value' => $repec->getEntityBundleSettings('serie_type', 'node', $node_type),
+      '#options' => $this->repec->availableSeries(),
+      '#default_value' => $this->repec->getEntityBundleSettings('serie_type', $entity_type_id, $bundle),
       '#states' => [
         'visible' => [
           ':input[name="enabled"]' => ['checked' => TRUE],
@@ -64,7 +121,7 @@ class NodeTypeSettingsForm extends FormBase {
       '#type' => 'textfield',
       '#title' => t('Serie name'),
       '#description' => t('Name for the serie (example: Working Paper).'),
-      '#default_value' => $repec->getEntityBundleSettings('serie_name', 'node', $node_type),
+      '#default_value' => $this->repec->getEntityBundleSettings('serie_name', $entity_type_id, $bundle),
       '#states' => [
         'visible' => [
           ':input[name="enabled"]' => ['checked' => TRUE],
@@ -85,7 +142,7 @@ class NodeTypeSettingsForm extends FormBase {
       // RepecInterface::getSeriesTemplate()
       // due to the current limitation to working papers.
       // '#default_value' => $repec->getEntityBundleSettings
-      // ('serie_directory', 'node', $node_type),.
+      // ('serie_directory', $entity_type_id, $bundle),.
       '#default_value' => RepecInterface::SERIES_WORKING_PAPER,
       '#disabled' => TRUE,
       '#states' => [
@@ -111,7 +168,7 @@ class NodeTypeSettingsForm extends FormBase {
       '#type' => 'checkbox',
       '#title' => t('Limit shared entities by field'),
       '#description' => t('While enabled, allows to evaluate a boolean field to share the entity on RePEc or not.'),
-      '#default_value' => $repec->getEntityBundleSettings('restriction_by_field', 'node', $node_type),
+      '#default_value' => $this->repec->getEntityBundleSettings('restriction_by_field', $entity_type_id, $bundle),
       '#states' => [
         'visible' => [
           ':input[name="enabled"]' => ['checked' => TRUE],
@@ -122,8 +179,8 @@ class NodeTypeSettingsForm extends FormBase {
       '#type' => 'select',
       '#title' => 'Restriction field',
       '#description' => t('Select the boolean field that will be used to post on RePEc.'),
-      '#options' => $this->getBooleanFields('node', $node_type),
-      '#default_value' => $repec->getEntityBundleSettings('restriction_field', 'node', $node_type),
+      '#options' => $this->getBooleanFields($entity_type_id, $bundle),
+      '#default_value' => $this->repec->getEntityBundleSettings('restriction_field', $entity_type_id, $bundle),
       '#states' => [
         'visible' => [
           ':input[name="restriction_by_field"]' => ['checked' => TRUE],
@@ -134,17 +191,13 @@ class NodeTypeSettingsForm extends FormBase {
       ],
     ];
 
-    $bundleFields = \Drupal::entityManager()->getFieldDefinitions('node', $node_type);
+    $bundleFields = $this->entityFieldManager->getFieldDefinitions($entity_type_id, $bundle);
     $fieldOptions = [];
     foreach ($bundleFields as $fieldName => $fieldDefinition) {
-      if (!empty($fieldDefinition->getTargetBundle())) {
-        $fieldOptions[$fieldName] = $fieldDefinition->getLabel();
-        // @todo validate
-        // $fieldDefinition->getType();
-      }
+      $fieldOptions[$fieldName] = $fieldDefinition->getLabel();
     }
 
-    $repecTemplateFields = $repec->getTemplateFields(RepecInterface::SERIES_WORKING_PAPER);
+    $repecTemplateFields = $this->repec->getTemplateFields(RepecInterface::SERIES_WORKING_PAPER);
 
     $form['template_field_mapping'] = [
       '#type' => 'fieldset',
@@ -160,7 +213,7 @@ class NodeTypeSettingsForm extends FormBase {
         '#type' => 'select',
         '#title' => $fieldLabel,
         '#options' => $fieldOptions,
-        '#default_value' => $repec->getEntityBundleSettings($fieldKey, 'node', $node_type),
+        '#default_value' => $this->repec->getEntityBundleSettings($fieldKey, $entity_type_id, $bundle),
         '#states' => [
           'visible' => [
             ':input[name="enabled"]' => ['checked' => TRUE],
@@ -187,10 +240,10 @@ class NodeTypeSettingsForm extends FormBase {
    */
   private function getBooleanFields($entity_type_id, $bundle) {
     $result = [];
-    $bundleFields = \Drupal::entityManager()->getFieldDefinitions($entity_type_id, $bundle);
+    $bundleFields = $this->entityFieldManager->getFieldDefinitions($entity_type_id, $bundle);
     /** @var \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition */
     foreach ($bundleFields as $fieldName => $fieldDefinition) {
-      if (!empty($fieldDefinition->getTargetBundle()) && $fieldDefinition->getType() === 'boolean') {
+      if ($fieldDefinition->getType() === 'boolean') {
         $result[$fieldName] = $fieldDefinition->getLabel();
       }
     }
@@ -219,28 +272,22 @@ class NodeTypeSettingsForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
     $storage = $form_state->getStorage();
-    $node_type = $storage['node_type'];
-    // Update RePEc settings.
-    $settings = [];
-    /** @var \Drupal\repec\RepecInterface $repec */
-    $repec = \Drupal::service('repec');
     // Empty configuration if set again to disabled.
     if (!$values['enabled']) {
-      $settings = $repec->getEntityBundleSettingDefaults();
+      $settings = $this->repec->getEntityBundleSettingDefaults();
     }
     else {
-      $settings = $repec->getEntityBundleSettings('all', 'node', $node_type);
-      foreach ($repec->availableEntityBundleSettings() as $setting) {
+      $settings = $this->repec->getEntityBundleSettings('all', $storage['entity_type_id'], $storage['bundle']);
+      foreach ($this->repec->availableEntityBundleSettings() as $setting) {
         if (isset($values[$setting])) {
           $settings[$setting] = is_array($values[$setting]) ? array_keys(array_filter($values[$setting])) : $values[$setting];
         }
       }
     }
-    $repec->setEntityBundleSettings($settings, 'node', $node_type);
-    $repec->createSeriesTemplate();
+    $this->repec->setEntityBundleSettings($settings, $storage['entity_type_id'], $storage['bundle']);
+    $this->repec->createSeriesTemplate();
 
-    $messenger = \Drupal::messenger();
-    $messenger->addMessage(t('Your changes have been saved.'));
+    $this->messenger->addMessage(t('Your changes have been saved.'));
   }
 
 }

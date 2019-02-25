@@ -7,8 +7,8 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\file\Entity\File;
-use Drupal\node\Entity\Node;
 
 /**
  * Class Repec.
@@ -44,13 +44,30 @@ class Repec implements RepecInterface {
   private $settings;
 
   /**
-   * Constructs a new RePEc object.
+   * Messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, FileSystemInterface $file_system, ConfigFactoryInterface $config_factory) {
+  protected $messenger;
+
+  /**
+   * Repec constructor.
+   *
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   Entity type manager.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   File system service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   Config factory service.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   Messenger service.
+   */
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, FileSystemInterface $file_system, ConfigFactoryInterface $config_factory, MessengerInterface $messenger) {
     $this->entityTypeManager = $entity_type_manager;
     $this->fileSystem = $file_system;
     $this->configFactory = $config_factory;
     $this->settings = $this->configFactory->get('repec.settings');
+    $this->messenger = $messenger;
   }
 
   /**
@@ -70,7 +87,7 @@ class Repec implements RepecInterface {
   public function initializeTemplates() {
     $basePath = $this->settings->get('base_path');
     if (empty($basePath)) {
-      \Drupal::messenger()->addError(t('The base path cannot be empty.'));
+      $this->messenger->addError(t('The base path cannot be empty.'));
       return;
     }
 
@@ -99,7 +116,7 @@ class Repec implements RepecInterface {
       }
     }
     else {
-      \Drupal::messenger()->addError(t('Directory @path could not be created.', [
+      $this->messenger->addError(t('Directory @path could not be created.', [
         '@path' => $basePath,
       ]));
     }
@@ -125,7 +142,7 @@ SetHandler None
 EOF;
 
     if (!file_put_contents($directory . '/' . $fileName, $content)) {
-      \Drupal::messenger()->addError(t('File @file_name could not be created', [
+      $this->messenger->addError(t('File @file_name could not be created', [
         '@file_name' => $fileName,
       ]));
     }
@@ -393,7 +410,7 @@ EOF;
       }
     }
     catch (InvalidPluginDefinitionException $exception) {
-      \Drupal::messenger()->addError($exception->getMessage());
+      $this->messenger->addError($exception->getMessage());
     }
     return $result;
   }
@@ -465,7 +482,7 @@ EOF;
       }
     }
     catch (InvalidPluginDefinitionException $exception) {
-      \Drupal::messenger()->addError($exception->getMessage());
+      $this->messenger->addError($exception->getMessage());
     }
     return $result;
   }
@@ -532,7 +549,7 @@ EOF;
     }
 
     if (!file_put_contents($directory . '/' . $fileName, $content)) {
-      \Drupal::messenger()->addError(t('File @file_name could not be created', [
+      $this->messenger->addError(t('File @file_name could not be created', [
         '@file_name' => $fileName,
       ]));
     }
@@ -568,7 +585,7 @@ EOF;
       file_unmanaged_delete($filePath);
     }
     else {
-      \Drupal::messenger()->addError(t('The directory @path is empty.', [
+      $this->messenger->addError(t('The directory @path is empty.', [
         '@path' => $directory,
       ]));
     }
@@ -598,14 +615,14 @@ EOF;
       }
 
       if (!file_put_contents($directory . '/' . $fileName, $content)) {
-        \Drupal::messenger()->addError(t('File @file_name could not be created', [
+        $this->messenger->addError(t('File @file_name could not be created', [
           '@file_name' => $fileName,
         ]));
       }
 
     }
     else {
-      \Drupal::messenger()->addError(t('Directory @path could not be created.', [
+      $this->messenger->addError(t('Directory @path could not be created.', [
         '@path' => $directory,
       ]));
     }
@@ -633,19 +650,17 @@ EOF;
    * {@inheritdoc}
    */
   public function isEntityShareable(ContentEntityInterface $entity) {
-    $result = FALSE;
-    if ($entity instanceof Node && $entity->isPublished()) {
-      $result = TRUE;
-    }
     // If a restriction is configured for this bundle,
     // get the field that is used for the restriction,
     // then get the entity field value.
     $hasRestriction = $this->getEntityBundleSettings('restriction_by_field', $entity->getEntityTypeId(), $entity->bundle()) === 1;
-    if ($hasRestriction) {
-      $restrictionField = $this->getEntityBundleSettings('restriction_field', $entity->getEntityTypeId(), $entity->bundle());
-      $result = $entity->get($restrictionField)->getValue()[0]['value'] === 1;
+
+    if (!$hasRestriction) {
+      return TRUE;
     }
-    return $result;
+
+    $restrictionField = $this->getEntityBundleSettings('restriction_field', $entity->getEntityTypeId(), $entity->bundle());
+    return $entity->get($restrictionField)->getValue()[0]['value'] === 1;
   }
 
   /**
@@ -669,7 +684,7 @@ EOF;
       }
     }
     catch (InvalidPluginDefinitionException $exception) {
-      \Drupal::messenger()->addError($exception->getMessage());
+      $this->messenger->addError($exception->getMessage());
     }
     return $result;
   }
@@ -695,7 +710,7 @@ EOF;
    * {@inheritdoc}
    */
   public function setEntityBundleSettings(array $settings, $entity_type_id, $bundle) {
-    $config = \Drupal::configFactory()->getEditable('repec.settings');
+    $config = $this->configFactory->getEditable('repec.settings');
     // Do not store default values.
     foreach ($this->getEntityBundleSettingDefaults() as $setting => $default_value) {
       if (isset($settings[$setting]) && $settings[$setting] == $default_value) {
