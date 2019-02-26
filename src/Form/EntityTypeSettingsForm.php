@@ -202,18 +202,19 @@ class EntityTypeSettingsForm extends FormBase {
 
     $repecTemplateFields = $this->repec->getTemplateFields($this->repec->getEntityBundleSettings('serie_type', $entity_type_id, $bundle));
 
-    if (!$form_state->isRebuilding()) {
-      $form['template_field_mapping'] = [
-        '#type' => 'fieldset',
-        '#title' => $this->t('Template field mapping'),
-        '#states' => [
-          'visible' => [
-            ':input[name="enabled"]' => ['checked' => TRUE],
-          ],
+    $form['template_field_mapping'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Template field mapping'),
+      '#states' => [
+        'visible' => [
+          ':input[name="enabled"]' => ['checked' => TRUE],
         ],
-        '#prefix' => "<div id=\"repec-$entity_type_id-$bundle-settings\">",
-        '#suffix' => '</div>',
-      ];
+      ],
+      '#prefix' => "<div id=\"repec-$entity_type_id-$bundle-settings\">",
+      '#suffix' => '</div>',
+    ];
+
+    if (!$form_state->isRebuilding()) {
       foreach ($repecTemplateFields as $fieldKey => $fieldLabel) {
         $form['template_field_mapping'][$fieldKey] = [
           '#type' => 'select',
