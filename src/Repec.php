@@ -51,6 +51,13 @@ class Repec implements RepecInterface {
   protected $messenger;
 
   /**
+   * Template factory.
+   *
+   * @var \Drupal\repec\TemplateFactory
+   */
+  protected $templateFactory;
+
+  /**
    * Repec constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -61,13 +68,16 @@ class Repec implements RepecInterface {
    *   Config factory service.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   Messenger service.
+   * @param \Drupal\repec\TemplateFactory $template_factory
+   *   Template factory.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, FileSystemInterface $file_system, ConfigFactoryInterface $config_factory, MessengerInterface $messenger) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, FileSystemInterface $file_system, ConfigFactoryInterface $config_factory, MessengerInterface $messenger, TemplateFactory $template_factory) {
     $this->entityTypeManager = $entity_type_manager;
     $this->fileSystem = $file_system;
     $this->configFactory = $config_factory;
     $this->settings = $this->configFactory->get('repec.settings');
     $this->messenger = $messenger;
+    $this->templateFactory = $template_factory;
   }
 
   /**
@@ -639,7 +649,9 @@ EOF;
    *   The entity that is the subject of the mapping.
    */
   private function createPaperTemplate(ContentEntityInterface $entity) {
-    $template = $this->getPaperTemplate($entity);
+    /** @var \Drupal\repec\Template\BaseInterface $template_class */
+    $template_class = $this->templateFactory::create($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()));
+    $template = $template_class->get();
     $serieDirectoryConfig = $this->getEntityBundleSettings('serie_directory', $entity->getEntityTypeId(), $entity->bundle());
     $directory = $this->getArchiveDirectory() . $serieDirectoryConfig . '/';
 
