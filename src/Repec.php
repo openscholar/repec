@@ -649,9 +649,17 @@ EOF;
    *   The entity that is the subject of the mapping.
    */
   private function createPaperTemplate(ContentEntityInterface $entity) {
-    /** @var \Drupal\repec\Template\BaseInterface $template_class */
-    $template_class = $this->templateFactory::create($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()));
+    /** @var \Drupal\repec\Series\Base $template_class */
+    $template_class = $this->templateFactory::create($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
     $template = $template_class->get();
+
+    $templateFields = $this->getTemplateFields(RepecInterface::SERIES_WORKING_PAPER);
+    foreach ($templateFields as $attributeKey => $attributeName) {
+      foreach ($this->getFieldValues($entity, $attributeKey, $attributeName->render()) as $fieldValue) {
+        $template[] = $fieldValue;
+      }
+    }
+
     $serieDirectoryConfig = $this->getEntityBundleSettings('serie_directory', $entity->getEntityTypeId(), $entity->bundle());
     $directory = $this->getArchiveDirectory() . $serieDirectoryConfig . '/';
 
