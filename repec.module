@@ -39,7 +39,7 @@ function repec_entity_insert(EntityInterface $entity) {
 
   /** @var \Drupal\repec\RepecInterface $repec */
   $repec = \Drupal::service('repec');
-  if ($repec->isEntityShareable($entity)) {
+  if ($repec->isBundleEnabled($entity) && $repec->isEntityShareable($entity)) {
     $repec->createEntityTemplate($entity, Repec::SERIES_WORKING_PAPER);
   }
 }
@@ -54,7 +54,7 @@ function repec_entity_update(EntityInterface $entity) {
 
   /** @var \Drupal\repec\RepecInterface $repec */
   $repec = \Drupal::service('repec');
-  if ($repec->isEntityShareable($entity)) {
+  if ($repec->isBundleEnabled($entity) && $repec->isEntityShareable($entity)) {
     $repec->updateEntityTemplate($entity, Repec::SERIES_WORKING_PAPER);
   }
   else {
@@ -72,7 +72,9 @@ function repec_entity_delete(EntityInterface $entity) {
 
   /** @var \Drupal\repec\RepecInterface $repec */
   $repec = \Drupal::service('repec');
-  $repec->deleteEntityTemplate($entity);
+  if ($repec->isBundleEnabled($entity)) {
+    $repec->deleteEntityTemplate($entity);
+  }
 }
 
 /**
