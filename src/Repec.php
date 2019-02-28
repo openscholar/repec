@@ -651,7 +651,7 @@ EOF;
   private function createPaperTemplate(ContentEntityInterface $entity) {
     /** @var \Drupal\repec\Series\Base $template_class */
     $template_class = $this->templateFactory->create($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
-    $template = $template_class->get();
+    $template = $template_class->getDefault();
 
     $templateFields = $this->getTemplateFields(RepecInterface::SERIES_WORKING_PAPER);
     foreach ($templateFields as $attributeKey => $attributeName) {

@@ -63,11 +63,11 @@ abstract class Base {
   }
 
   /**
-   * Returns the template structure.
+   * Returns the default template structure.
    *
    * @return array
    *   The structure.
    */
-  abstract public function get() : array;
+  abstract public function getDefault() : array;
 
 }

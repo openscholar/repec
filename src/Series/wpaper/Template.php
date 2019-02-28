@@ -12,7 +12,7 @@ class Template extends Base {
   /**
    * {@inheritdoc}
    */
-  public function get() : array {
+  public function getDefault() : array {
     $result = [
       [
         'attribute' => 'Template-Type',
