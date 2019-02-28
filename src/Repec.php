@@ -249,40 +249,6 @@ EOF;
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function getPaperTemplate(ContentEntityInterface $entity) {
-    $result = [
-      [
-        'attribute' => 'Template-Type',
-        'value' => 'ReDIF-Paper 1.0',
-      ],
-      [
-        'attribute' => 'Title',
-        'value' => $entity->label(),
-      ],
-      [
-        'attribute' => 'Number',
-        // Entity id cannot be used here as there could be
-        // probably several entity types in a further release.
-        'value' => $entity->uuid(),
-      ],
-      [
-        'attribute' => 'Handle',
-        // @todo review unicity of node id for a shared series within several entity types.
-        'value' => 'RePEc:' . $this->settings->get('archive_code') . ':wpaper:' . $entity->id(),
-      ],
-    ];
-    $templateFields = $this->getTemplateFields(RepecInterface::SERIES_WORKING_PAPER);
-    foreach ($templateFields as $attributeKey => $attributeName) {
-      foreach ($this->getFieldValues($entity, $attributeKey, $attributeName->render()) as $fieldValue) {
-        $result[] = $fieldValue;
-      }
-    }
-    return $result;
-  }
-
-  /**
    * Gets the value of a field based on a RePEC attribute.
    *
    * The attribute / field mapping is done via the entity type configuration.
@@ -568,11 +534,13 @@ EOF;
    * {@inheritdoc}
    */
   public function getEntityTemplate(ContentEntityInterface $entity) {
+    /** @var string $series_type */
+    $series_type = $this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle());
     /** @var \Drupal\repec\Series\Base $template_class */
-    $template_class = $this->templateFactory->create($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
+    $template_class = $this->templateFactory->create($series_type, $entity);
     $template = $template_class->getDefault();
 
-    $templateFields = $this->getTemplateFields(RepecInterface::SERIES_WORKING_PAPER);
+    $templateFields = $this->getTemplateFields($series_type);
     foreach ($templateFields as $attributeKey => $attributeName) {
       foreach ($this->getFieldValues($entity, $attributeKey, $attributeName->render()) as $fieldValue) {
         $template[] = $fieldValue;
@@ -620,10 +588,18 @@ EOF;
    * {@inheritdoc}
    */
   public function createEntityTemplate(ContentEntityInterface $entity, $templateType) {
-    // @todo based on the bundle configuration, select series
-    // via a factory to get the right template.
-    // Currently limiting it to the Working Paper series.
-    $this->createPaperTemplate($entity);
+    /** @var array $template */
+    $template = $this->getEntityTemplate($entity);
+
+    /** @var \Drupal\repec\Series\Base $template_class */
+    $template_class = $this->templateFactory->create($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
+
+    try {
+      $template_class->create($template);
+    }
+    catch (\Exception $e) {
+      $this->messenger->addError($e->getMessage());
+    }
   }
 
   /**
@@ -649,27 +625,6 @@ EOF;
       $this->messenger->addError(t('The directory @path is empty.', [
         '@path' => $directory,
       ]));
-    }
-  }
-
-  /**
-   * Maps the series fields with the node fields to create the template file.
-   *
-   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
-   *   The entity that is the subject of the mapping.
-   */
-  private function createPaperTemplate(ContentEntityInterface $entity) {
-    /** @var array $template */
-    $template = $this->getEntityTemplate($entity);
-
-    /** @var \Drupal\repec\Series\Base $template_class */
-    $template_class = $this->templateFactory->create($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
-
-    try {
-      $template_class->create($template);
-    }
-    catch (\Exception $e) {
-      $this->messenger->addError($e->getMessage());
     }
   }
 

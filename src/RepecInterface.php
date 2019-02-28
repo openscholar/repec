@@ -62,17 +62,6 @@ interface RepecInterface {
    * @return array
    *   RDF template.
    */
-  public function getPaperTemplate(ContentEntityInterface $entity);
-
-  /**
-   * Maps a template to an entity based on its bundle configuration.
-   *
-   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
-   *   The entity that is the subject of the template.
-   *
-   * @return array
-   *   RDF template.
-   */
   public function getEntityTemplate(ContentEntityInterface $entity);
 
   /**
