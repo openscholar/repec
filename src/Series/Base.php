@@ -70,4 +70,50 @@ abstract class Base {
    */
   abstract public function getDefault() : array;
 
+  /**
+   * Creates the template.
+   *
+   * @param array $template
+   *   The template structure.
+   *
+   * @throws \Drupal\repec\Series\CreateException
+   */
+  public function create(array $template) {
+    /** @var array $bundle_settings */
+    // The following is already done in
+    // \Drupal\repec\Repec::getEntityBundleSettings
+    // TODO: Move this to a parent service or something.
+    $bundle_settings = unserialize($this->settings->get("repec_bundle.{$this->entity->getEntityTypeId()}.{$this->entity->bundle()}"));
+
+    /** @var string $serie_directory_config */
+    $serie_directory_config = $bundle_settings['serie_directory'];
+
+    // The following is already done in \Drupal\repec\Repec::getArchiveDirectory
+    // TODO: Move this to a parent service or something.
+    $archive_directory = "public://{$this->settings->get('base_path')}/{$this->settings->get('archive_code')}/";
+
+    $directory = "{$archive_directory}{$serie_directory_config}/";
+
+    if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+      throw new CreateException($this->t('Directory @path could not be created.', [
+        '@path' => $directory,
+      ]));
+    }
+
+    $file_name = "{$serie_directory_config}_{$this->entity->getEntityTypeId()}_{$this->entity->id()}.rdf";
+
+    $content = '';
+    foreach ($template as $item) {
+      if (!empty($item['value'])) {
+        $content .= $item['attribute'] . ': ' . $item['value'] . "\n";
+      }
+    }
+
+    if (!file_put_contents("$directory/$file_name", $content)) {
+      throw new CreateException($this->t('File @file_name could not be created.', [
+        '@file_name' => $file_name,
+      ]));
+    }
+  }
+
 }

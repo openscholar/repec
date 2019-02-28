@@ -662,32 +662,14 @@ EOF;
     /** @var array $template */
     $template = $this->getEntityTemplate($entity);
 
-    $serieDirectoryConfig = $this->getEntityBundleSettings('serie_directory', $entity->getEntityTypeId(), $entity->bundle());
-    $directory = $this->getArchiveDirectory() . $serieDirectoryConfig . '/';
+    /** @var \Drupal\repec\Series\Base $template_class */
+    $template_class = $this->templateFactory->create($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
 
-    if (!empty($directory) &&
-      file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
-
-      $fileName = $serieDirectoryConfig . '_' . $entity->getEntityTypeId() . '_' . $entity->id() . '.rdf';
-
-      $content = '';
-      foreach ($template as $item) {
-        if (!empty($item['value'])) {
-          $content .= $item['attribute'] . ': ' . $item['value'] . "\n";
-        }
-      }
-
-      if (!file_put_contents($directory . '/' . $fileName, $content)) {
-        $this->messenger->addError(t('File @file_name could not be created', [
-          '@file_name' => $fileName,
-        ]));
-      }
-
+    try {
+      $template_class->create($template);
     }
-    else {
-      $this->messenger->addError(t('Directory @path could not be created.', [
-        '@path' => $directory,
-      ]));
+    catch (\Exception $e) {
+      $this->messenger->addError($e->getMessage());
     }
   }
 
