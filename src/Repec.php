@@ -568,8 +568,18 @@ EOF;
    * {@inheritdoc}
    */
   public function getEntityTemplate(ContentEntityInterface $entity) {
-    // @todo review usage of RDF module.
-    // @todo implement and refactor with getPaperTemplate().
+    /** @var \Drupal\repec\Series\Base $template_class */
+    $template_class = $this->templateFactory->create($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
+    $template = $template_class->getDefault();
+
+    $templateFields = $this->getTemplateFields(RepecInterface::SERIES_WORKING_PAPER);
+    foreach ($templateFields as $attributeKey => $attributeName) {
+      foreach ($this->getFieldValues($entity, $attributeKey, $attributeName->render()) as $fieldValue) {
+        $template[] = $fieldValue;
+      }
+    }
+
+    return $template;
   }
 
   /**
@@ -649,16 +659,8 @@ EOF;
    *   The entity that is the subject of the mapping.
    */
   private function createPaperTemplate(ContentEntityInterface $entity) {
-    /** @var \Drupal\repec\Series\Base $template_class */
-    $template_class = $this->templateFactory->create($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
-    $template = $template_class->getDefault();
-
-    $templateFields = $this->getTemplateFields(RepecInterface::SERIES_WORKING_PAPER);
-    foreach ($templateFields as $attributeKey => $attributeName) {
-      foreach ($this->getFieldValues($entity, $attributeKey, $attributeName->render()) as $fieldValue) {
-        $template[] = $fieldValue;
-      }
-    }
+    /** @var array $template */
+    $template = $this->getEntityTemplate($entity);
 
     $serieDirectoryConfig = $this->getEntityBundleSettings('serie_directory', $entity->getEntityTypeId(), $entity->bundle());
     $directory = $this->getArchiveDirectory() . $serieDirectoryConfig . '/';
