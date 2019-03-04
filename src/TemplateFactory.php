@@ -63,7 +63,11 @@ final class TemplateFactory {
    */
   public function create($series_type, ContentEntityInterface $entity) : Base {
     $template_class = "Drupal\\repec\\Series\\$series_type\\Template";
-    return new $template_class($this->configFactory->get('repec.settings'), $this->entityTypeManager, $this->messenger, $entity);
+    /** @var \Drupal\Core\Config\ImmutableConfig $repec_settings */
+    $repec_settings = $this->configFactory->get('repec.settings');
+    /** @var array|null $bundle_settings */
+    $bundle_settings = unserialize($repec_settings->get("repec_bundle.{$entity->getEntityTypeId()}.{$entity->bundle()}"));
+    return new $template_class($repec_settings, $this->entityTypeManager, $this->messenger, $entity, $bundle_settings);
   }
 
 }

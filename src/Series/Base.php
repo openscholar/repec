@@ -44,6 +44,13 @@ abstract class Base {
   protected $messenger;
 
   /**
+   * Bundle specific setting in repec settings.
+   *
+   * @var \Drupal\Core\Config\ImmutableConfig
+   */
+  protected $bundleSettings;
+
+  /**
    * Base constructor.
    *
    * @param \Drupal\Core\Config\ImmutableConfig $settings
@@ -54,12 +61,15 @@ abstract class Base {
    *   Messenger.
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
+   * @param array|null $bundle_settings
+   *   Bundle specific setting in repec settings.
    */
-  public function __construct(ImmutableConfig $settings, EntityTypeManagerInterface $entity_type_manager, MessengerInterface $messenger, ContentEntityInterface $entity) {
+  public function __construct(ImmutableConfig $settings, EntityTypeManagerInterface $entity_type_manager, MessengerInterface $messenger, ContentEntityInterface $entity, array $bundle_settings) {
     $this->settings = $settings;
     $this->entityTypeManager = $entity_type_manager;
     $this->messenger = $messenger;
     $this->entity = $entity;
+    $this->bundleSettings = $bundle_settings;
   }
 
   /**
@@ -79,14 +89,8 @@ abstract class Base {
    * @throws \Drupal\repec\Series\CreateException
    */
   public function create(array $template) {
-    /** @var array $bundle_settings */
-    // The following is already done in
-    // \Drupal\repec\Repec::getEntityBundleSettings
-    // TODO: Move this to a parent service or something.
-    $bundle_settings = unserialize($this->settings->get("repec_bundle.{$this->entity->getEntityTypeId()}.{$this->entity->bundle()}"));
-
     /** @var string $serie_directory_config */
-    $serie_directory_config = $bundle_settings['serie_directory'];
+    $serie_directory_config = $this->bundleSettings['serie_directory'];
 
     $archive_directory = "public://{$this->settings->get('base_path')}/{$this->settings->get('archive_code')}/";
 
