@@ -88,8 +88,6 @@ abstract class Base {
     /** @var string $serie_directory_config */
     $serie_directory_config = $bundle_settings['serie_directory'];
 
-    // The following is already done in \Drupal\repec\Repec::getArchiveDirectory
-    // TODO: Move this to a parent service or something.
     $archive_directory = "public://{$this->settings->get('base_path')}/{$this->settings->get('archive_code')}/";
 
     $directory = "{$archive_directory}{$serie_directory_config}/";

@@ -58,6 +58,13 @@ class Repec implements RepecInterface {
   protected $templateFactory;
 
   /**
+   * Template class.
+   *
+   * @var \Drupal\repec\Series\Base|null
+   */
+  protected $templateClass = NULL;
+
+  /**
    * Repec constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -537,7 +544,7 @@ EOF;
     /** @var string $series_type */
     $series_type = $this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle());
     /** @var \Drupal\repec\Series\Base $template_class */
-    $template_class = $this->templateFactory->create($series_type, $entity);
+    $template_class = $this->getTemplateClass($series_type, $entity);
     $template = $template_class->getDefault();
 
     $templateFields = $this->getTemplateFields($series_type);
@@ -592,7 +599,7 @@ EOF;
     $template = $this->getEntityTemplate($entity);
 
     /** @var \Drupal\repec\Series\Base $template_class */
-    $template_class = $this->templateFactory->create($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
+    $template_class = $this->getTemplateClass($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
 
     try {
       $template_class->create($template);
@@ -763,6 +770,27 @@ EOF;
     $defaults['keywords'] = '';
     $defaults['provider_name'] = '';
     return $defaults;
+  }
+
+  /**
+   * Returns a template class.
+   *
+   * Creates one if not already created.
+   *
+   * @param string $series_type
+   *   Series type of the template class.
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity for the template class.
+   *
+   * @return \Drupal\repec\Series\Base
+   *   The template class.
+   */
+  private function getTemplateClass($series_type, ContentEntityInterface $entity) {
+    if (!$this->templateClass) {
+      $this->templateClass = $this->templateFactory->create($series_type, $entity);
+    }
+
+    return $this->templateClass;
   }
 
 }
