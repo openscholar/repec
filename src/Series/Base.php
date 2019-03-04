@@ -46,7 +46,7 @@ abstract class Base {
   /**
    * Bundle specific setting in repec settings.
    *
-   * @var \Drupal\Core\Config\ImmutableConfig
+   * @var array|null
    */
   protected $bundleSettings;
 
@@ -78,7 +78,24 @@ abstract class Base {
    * @return array
    *   The structure.
    */
-  abstract public function getDefault() : array;
+  public function getDefault() : array {
+    return [
+      [
+        'attribute' => 'Title',
+        'value' => $this->entity->label(),
+      ],
+      [
+        'attribute' => 'Number',
+        // Entity id cannot be used here as there could be
+        // probably several entity types in a further release.
+        'value' => $this->entity->uuid(),
+      ],
+      [
+        'attribute' => 'Handle',
+        'value' => "RePEc:{$this->settings->get('archive_code')}:{$this->bundleSettings['serie_type']}:{$this->entity->id()}",
+      ],
+    ];
+  }
 
   /**
    * Creates the template.
