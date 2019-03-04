@@ -16,6 +16,10 @@ interface RepecInterface {
   const TEMPLATE_SERIES = 'seri';
 
   const SERIES_WORKING_PAPER = 'wpaper';
+  const SERIES_JOURNAL_ARTICLE = 'journl';
+  const SERIES_SOFTWARE_COMPONENT = 'eccode';
+  const SERIES_BOOK = 'ecbook';
+  const SERIES_BOOK_CHAPTER = 'ecchap';
 
   /**
    * Returns the archive directory.
@@ -48,17 +52,6 @@ interface RepecInterface {
    *   RDF template.
    */
   public function getSeriesTemplate();
-
-  /**
-   * Maps a template to an entity based on its bundle configuration.
-   *
-   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
-   *   The entity that is the subject of the template.
-   *
-   * @return array
-   *   RDF template.
-   */
-  public function getPaperTemplate(ContentEntityInterface $entity);
 
   /**
    * Maps a template to an entity based on its bundle configuration.

@@ -1,7 +1,10 @@
 services:
+  template_factory:
+    class: Drupal\repec\TemplateFactory
+    arguments: ['@entity_type.manager', '@config.factory', '@messenger']
   repec:
     class: Drupal\repec\Repec
-    arguments: ['@entity_type.manager', '@file_system', '@config.factory', '@messenger']
+    arguments: ['@entity_type.manager', '@file_system', '@config.factory', '@messenger', '@template_factory']
   route_subscriber:
     class: Drupal\repec\Routing\RouteSubscriber
     arguments: ['@entity_type.manager']

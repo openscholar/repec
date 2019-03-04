@@ -51,6 +51,20 @@ class Repec implements RepecInterface {
   protected $messenger;
 
   /**
+   * Template factory.
+   *
+   * @var \Drupal\repec\TemplateFactory
+   */
+  protected $templateFactory;
+
+  /**
+   * Template class.
+   *
+   * @var \Drupal\repec\Series\Base|null
+   */
+  protected $templateClass = NULL;
+
+  /**
    * Repec constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -61,13 +75,16 @@ class Repec implements RepecInterface {
    *   Config factory service.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   Messenger service.
+   * @param \Drupal\repec\TemplateFactory $template_factory
+   *   Template factory.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, FileSystemInterface $file_system, ConfigFactoryInterface $config_factory, MessengerInterface $messenger) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, FileSystemInterface $file_system, ConfigFactoryInterface $config_factory, MessengerInterface $messenger, TemplateFactory $template_factory) {
     $this->entityTypeManager = $entity_type_manager;
     $this->fileSystem = $file_system;
     $this->configFactory = $config_factory;
     $this->settings = $this->configFactory->get('repec.settings');
     $this->messenger = $messenger;
+    $this->templateFactory = $template_factory;
   }
 
   /**
@@ -236,40 +253,6 @@ EOF;
         'value' => 'RePEc:' . $this->settings->get('archive_code') . ':wpaper',
       ],
     ];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getPaperTemplate(ContentEntityInterface $entity) {
-    $result = [
-      [
-        'attribute' => 'Template-Type',
-        'value' => 'ReDIF-Paper 1.0',
-      ],
-      [
-        'attribute' => 'Title',
-        'value' => $entity->label(),
-      ],
-      [
-        'attribute' => 'Number',
-        // Entity id cannot be used here as there could be
-        // probably several entity types in a further release.
-        'value' => $entity->uuid(),
-      ],
-      [
-        'attribute' => 'Handle',
-        // @todo review unicity of node id for a shared series within several entity types.
-        'value' => 'RePEc:' . $this->settings->get('archive_code') . ':wpaper:' . $entity->id(),
-      ],
-    ];
-    $templateFields = $this->getTemplateFields(RepecInterface::SERIES_WORKING_PAPER);
-    foreach ($templateFields as $attributeKey => $attributeName) {
-      foreach ($this->getFieldValues($entity, $attributeKey, $attributeName->render()) as $fieldValue) {
-        $result[] = $fieldValue;
-      }
-    }
-    return $result;
   }
 
   /**
@@ -509,6 +492,47 @@ EOF;
           'keywords' => t('Keywords'),
         ];
         break;
+
+      case RepecInterface::SERIES_JOURNAL_ARTICLE:
+        $result = [
+          'author_name' => t('Author-Name'),
+          'abstract' => t('Abstract'),
+          'creation_date' => t('Creation-Date'),
+          'file_url' => t('File-URL'),
+          'keywords' => t('Keywords'),
+        ];
+        break;
+
+      case RepecInterface::SERIES_BOOK:
+        $result = [
+          'author_name' => t('Author-Name'),
+          'provider_name' => t('Provider-Name'),
+          'abstract' => t('Abstract'),
+          'creation_date' => t('Creation-Date'),
+          'file_url' => t('File-URL'),
+          'keywords' => t('Keywords'),
+        ];
+        break;
+
+      case RepecInterface::SERIES_BOOK_CHAPTER:
+        $result = [
+          'author_name' => t('Author-Name'),
+          'abstract' => t('Abstract'),
+          'creation_date' => t('Creation-Date'),
+          'file_url' => t('File-URL'),
+          'keywords' => t('Keywords'),
+        ];
+        break;
+
+      case RepecInterface::SERIES_SOFTWARE_COMPONENT:
+        $result = [
+          'author_name' => t('Author-Name'),
+          'abstract' => t('Abstract'),
+          'creation_date' => t('Creation-Date'),
+          'file_url' => t('File-URL'),
+          'keywords' => t('Keywords'),
+        ];
+        break;
     }
     return $result;
   }
@@ -517,8 +541,20 @@ EOF;
    * {@inheritdoc}
    */
   public function getEntityTemplate(ContentEntityInterface $entity) {
-    // @todo review usage of RDF module.
-    // @todo implement and refactor with getPaperTemplate().
+    /** @var string $series_type */
+    $series_type = $this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle());
+    /** @var \Drupal\repec\Series\Base $template_class */
+    $template_class = $this->getTemplateClass($series_type, $entity);
+    $template = $template_class->getDefault();
+
+    $templateFields = $this->getTemplateFields($series_type);
+    foreach ($templateFields as $attributeKey => $attributeName) {
+      foreach ($this->getFieldValues($entity, $attributeKey, $attributeName->render()) as $fieldValue) {
+        $template[] = $fieldValue;
+      }
+    }
+
+    return $template;
   }
 
   /**
@@ -559,10 +595,18 @@ EOF;
    * {@inheritdoc}
    */
   public function createEntityTemplate(ContentEntityInterface $entity, $templateType) {
-    // @todo based on the bundle configuration, select series
-    // via a factory to get the right template.
-    // Currently limiting it to the Working Paper series.
-    $this->createPaperTemplate($entity);
+    /** @var array $template */
+    $template = $this->getEntityTemplate($entity);
+
+    /** @var \Drupal\repec\Series\Base $template_class */
+    $template_class = $this->getTemplateClass($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
+
+    try {
+      $template_class->create($template);
+    }
+    catch (\Exception $e) {
+      $this->messenger->addError($e->getMessage());
+    }
   }
 
   /**
@@ -592,50 +636,15 @@ EOF;
   }
 
   /**
-   * Maps the series fields with the node fields to create the template file.
-   *
-   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
-   *   The entity that is the subject of the mapping.
-   */
-  private function createPaperTemplate(ContentEntityInterface $entity) {
-    $template = $this->getPaperTemplate($entity);
-    $serieDirectoryConfig = $this->getEntityBundleSettings('serie_directory', $entity->getEntityTypeId(), $entity->bundle());
-    $directory = $this->getArchiveDirectory() . $serieDirectoryConfig . '/';
-
-    if (!empty($directory) &&
-      file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
-
-      $fileName = $serieDirectoryConfig . '_' . $entity->getEntityTypeId() . '_' . $entity->id() . '.rdf';
-
-      $content = '';
-      foreach ($template as $item) {
-        if (!empty($item['value'])) {
-          $content .= $item['attribute'] . ': ' . $item['value'] . "\n";
-        }
-      }
-
-      if (!file_put_contents($directory . '/' . $fileName, $content)) {
-        $this->messenger->addError(t('File @file_name could not be created', [
-          '@file_name' => $fileName,
-        ]));
-      }
-
-    }
-    else {
-      $this->messenger->addError(t('Directory @path could not be created.', [
-        '@path' => $directory,
-      ]));
-    }
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function availableSeries() {
     return [
-      // The series list is subject to be extended
-      // but currently limited to wpaper.
       RepecInterface::SERIES_WORKING_PAPER => t('Paper series'),
+      RepecInterface::SERIES_JOURNAL_ARTICLE => t('Journal article series'),
+      RepecInterface::SERIES_BOOK => t('Book series'),
+      RepecInterface::SERIES_BOOK_CHAPTER => t('Book chapter series'),
+      RepecInterface::SERIES_SOFTWARE_COMPONENT => t('Software component series'),
     ];
   }
 
@@ -729,6 +738,7 @@ EOF;
       'enabled',
       'serie_type',
       'serie_name',
+      'is_different_serie_directory',
       'serie_directory',
       'restriction_by_field',
       'restriction_field',
@@ -737,6 +747,7 @@ EOF;
       'creation_date',
       'file_url',
       'keywords',
+      'provider_name',
     ];
   }
 
@@ -748,6 +759,7 @@ EOF;
     $defaults['enabled'] = FALSE;
     $defaults['serie_type'] = '';
     $defaults['serie_name'] = '';
+    $defaults['is_different_serie_directory'] = TRUE;
     $defaults['serie_directory'] = '';
     $defaults['restriction_by_field'] = '';
     $defaults['restriction_field'] = '';
@@ -756,7 +768,29 @@ EOF;
     $defaults['creation_date'] = '';
     $defaults['file_url'] = '';
     $defaults['keywords'] = '';
+    $defaults['provider_name'] = '';
     return $defaults;
+  }
+
+  /**
+   * Returns a template class.
+   *
+   * Creates one if not already created.
+   *
+   * @param string $series_type
+   *   Series type of the template class.
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity for the template class.
+   *
+   * @return \Drupal\repec\Series\Base
+   *   The template class.
+   */
+  private function getTemplateClass($series_type, ContentEntityInterface $entity) {
+    if (!$this->templateClass) {
+      $this->templateClass = $this->templateFactory->create($series_type, $entity);
+    }
+
+    return $this->templateClass;
   }
 
 }

@@ -116,6 +116,10 @@ class EntityTypeSettingsForm extends FormBase {
           ':input[name="enabled"]' => ['checked' => TRUE],
         ],
       ],
+      '#ajax' => [
+        'callback' => [$this, 'alterTemplateFieldMappingSettings'],
+        'wrapper' => "repec-$entity_type_id-$bundle-settings",
+      ],
     ];
     $form['serie']['serie_name'] = [
       '#type' => 'textfield',
@@ -131,23 +135,22 @@ class EntityTypeSettingsForm extends FormBase {
         ],
       ],
     ];
+    $form['serie']['is_different_serie_directory'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Use directory name from series'),
+      '#default_value' => $this->repec->getEntityBundleSettings('is_different_serie_directory', $entity_type_id, $bundle),
+    ];
     $form['serie']['serie_directory'] = [
       '#type' => 'textfield',
       '#title' => t('Templates directory for this serie'),
       '#description' => t('It must have exactly six letters. Currently limited to Working Paper so defaulting to "wpaper"'),
       '#maxlength' => 6,
       '#size' => 6,
-      // The serie_directory is currently not configurable because
-      // it is hardcoded as a default value in the
-      // RepecInterface::getSeriesTemplate()
-      // due to the current limitation to working papers.
-      // '#default_value' => $repec->getEntityBundleSettings
-      // ('serie_directory', $entity_type_id, $bundle),.
-      '#default_value' => RepecInterface::SERIES_WORKING_PAPER,
-      '#disabled' => TRUE,
+      '#default_value' => $this->repec->getEntityBundleSettings('serie_directory', $entity_type_id, $bundle),
       '#states' => [
         'visible' => [
           ':input[name="enabled"]' => ['checked' => TRUE],
+          ':input[name="is_different_serie_directory"]' => ['checked' => FALSE],
         ],
         'required' => [
           ':input[name="enabled"]' => ['checked' => TRUE],
@@ -197,7 +200,7 @@ class EntityTypeSettingsForm extends FormBase {
       $fieldOptions[$fieldName] = $fieldDefinition->getLabel();
     }
 
-    $repecTemplateFields = $this->repec->getTemplateFields(RepecInterface::SERIES_WORKING_PAPER);
+    $repecTemplateFields = $this->repec->getTemplateFields($this->repec->getEntityBundleSettings('serie_type', $entity_type_id, $bundle));
 
     $form['template_field_mapping'] = [
       '#type' => 'fieldset',
@@ -207,22 +210,27 @@ class EntityTypeSettingsForm extends FormBase {
           ':input[name="enabled"]' => ['checked' => TRUE],
         ],
       ],
+      '#prefix' => "<div id=\"repec-$entity_type_id-$bundle-settings\">",
+      '#suffix' => '</div>',
     ];
-    foreach ($repecTemplateFields as $fieldKey => $fieldLabel) {
-      $form['template_field_mapping'][$fieldKey] = [
-        '#type' => 'select',
-        '#title' => $fieldLabel,
-        '#options' => $fieldOptions,
-        '#default_value' => $this->repec->getEntityBundleSettings($fieldKey, $entity_type_id, $bundle),
-        '#states' => [
-          'visible' => [
-            ':input[name="enabled"]' => ['checked' => TRUE],
+
+    if (!$form_state->isRebuilding()) {
+      foreach ($repecTemplateFields as $fieldKey => $fieldLabel) {
+        $form['template_field_mapping'][$fieldKey] = [
+          '#type' => 'select',
+          '#title' => $fieldLabel,
+          '#options' => $fieldOptions,
+          '#default_value' => $this->repec->getEntityBundleSettings($fieldKey, $entity_type_id, $bundle),
+          '#states' => [
+            'visible' => [
+              ':input[name="enabled"]' => ['checked' => TRUE],
+            ],
+            'required' => [
+              ':input[name="enabled"]' => ['checked' => TRUE],
+            ],
           ],
-          'required' => [
-            ':input[name="enabled"]' => ['checked' => TRUE],
-          ],
-        ],
-      ];
+        ];
+      }
     }
 
     $form['actions']['#type'] = 'actions';
@@ -284,10 +292,46 @@ class EntityTypeSettingsForm extends FormBase {
         }
       }
     }
+
+    if ($form_state->getValue('is_different_serie_directory')) {
+      $settings['serie_directory'] = $form_state->getValue('serie_type');
+    }
     $this->repec->setEntityBundleSettings($settings, $storage['entity_type_id'], $storage['bundle']);
     $this->repec->createSeriesTemplate();
 
     $this->messenger->addMessage(t('Your changes have been saved.'));
+  }
+
+  /**
+   * Ajax alter the template field mapping settings.
+   *
+   * @ingroup forms
+   */
+  public function alterTemplateFieldMappingSettings(array &$form, FormStateInterface $form_state) {
+    /** @var array $storage */
+    $storage = $form_state->getStorage();
+
+    $bundle_fields = $this->entityFieldManager->getFieldDefinitions($storage['entity_type_id'], $storage['bundle']);
+    $field_options = [];
+    foreach ($bundle_fields as $field_name => $field_definition) {
+      $field_options[$field_name] = $field_definition->getLabel();
+    }
+
+    $repec_template_fields = $this->repec->getTemplateFields($form_state->getValue('serie_type'));
+
+    foreach ($repec_template_fields as $field_key => $field_label) {
+      $form['template_field_mapping'][$field_key] = [
+        '#type' => 'select',
+        '#title' => $field_label,
+        '#options' => $field_options,
+        '#default_value' => $this->repec->getEntityBundleSettings($field_key, $storage['entity_type_id'], $storage['bundle']),
+        '#required' => TRUE,
+      ];
+    }
+
+    $form_state->setRebuild(TRUE);
+
+    return $form['template_field_mapping'];
   }
 
 }
