@@ -11,7 +11,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 /**
  * Base structure for templating classes.
  */
-abstract class Base {
+abstract class Base implements BaseInterface {
 
   use StringTranslationTrait;
 
@@ -73,10 +73,7 @@ abstract class Base {
   }
 
   /**
-   * Returns the default template structure.
-   *
-   * @return array
-   *   The structure.
+   * {@inheritdoc}
    */
   public function getDefault() : array {
     return [
@@ -98,12 +95,7 @@ abstract class Base {
   }
 
   /**
-   * Creates the template.
-   *
-   * @param array $template
-   *   The template structure.
-   *
-   * @throws \Drupal\repec\Series\CreateException
+   * {@inheritdoc}
    */
   public function create(array $template) {
     /** @var string $serie_directory_config */
