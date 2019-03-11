@@ -420,8 +420,9 @@ EOF;
    */
   private function getFileAttributes(array $field_value) {
     $result = [];
-    if (!empty($field_value[0]['target_id'])) {
-      $file = File::load($field_value[0]['target_id']);
+
+    foreach ($field_value as $item) {
+      $file = File::load($item['target_id']);
       $uri = $file->getFileUri();
       $url = str_replace(' ', '%20', file_create_url($uri));
       $result[] = [
@@ -433,6 +434,7 @@ EOF;
         'value' => ucfirst($file->getMimeType()),
       ];
     }
+
     return $result;
   }
 
