@@ -5,6 +5,7 @@ namespace Drupal\repec;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -65,6 +66,13 @@ class Repec implements RepecInterface {
   protected $templateClass = NULL;
 
   /**
+   * Module handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
    * Repec constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -77,14 +85,17 @@ class Repec implements RepecInterface {
    *   Messenger service.
    * @param \Drupal\repec\TemplateFactory $template_factory
    *   Template factory.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   Module handler.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, FileSystemInterface $file_system, ConfigFactoryInterface $config_factory, MessengerInterface $messenger, TemplateFactory $template_factory) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, FileSystemInterface $file_system, ConfigFactoryInterface $config_factory, MessengerInterface $messenger, TemplateFactory $template_factory, ModuleHandlerInterface $module_handler) {
     $this->entityTypeManager = $entity_type_manager;
     $this->fileSystem = $file_system;
     $this->configFactory = $config_factory;
     $this->settings = $this->configFactory->get('repec.settings');
     $this->messenger = $messenger;
     $this->templateFactory = $template_factory;
+    $this->moduleHandler = $module_handler;
   }
 
   /**
@@ -553,6 +564,8 @@ EOF;
         $template[] = $fieldValue;
       }
     }
+
+    $this->moduleHandler->alter("repec_{$series_type}_template", $template, $entity);
 
     return $template;
   }
