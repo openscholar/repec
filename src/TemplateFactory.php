@@ -7,6 +7,7 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\repec\Series\Base;
+use Drupal\repec\Series\BaseInterface;
 
 /**
  * TemplateFactory.
@@ -58,10 +59,10 @@ final class TemplateFactory {
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity used for generating the template.
    *
-   * @return \Drupal\repec\Series\Base
+   * @return \Drupal\repec\Series\BaseInterface
    *   The templating class.
    */
-  public function create($series_type, ContentEntityInterface $entity) : Base {
+  public function create($series_type, ContentEntityInterface $entity) : BaseInterface {
     $template_class = "Drupal\\repec\\Series\\$series_type\\Template";
     /** @var \Drupal\Core\Config\ImmutableConfig $repec_settings */
     $repec_settings = $this->configFactory->get('repec.settings');
