@@ -86,7 +86,7 @@ function hook_repec_archive_mapping_alter(array &$data) {
  *
  * @ingroup repec
  */
-function hook_repec_SERIES_template_alter(array &$data, ContentEntityInterface $entity) {
+function hook_repec_template_alter(array &$data, ContentEntityInterface $entity) {
 }
 
 /**
