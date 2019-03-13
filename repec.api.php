@@ -77,7 +77,7 @@ function hook_repec_archive_mapping_alter(array &$data) {
 }
 
 /**
- * Alters the template of a series.
+ * Alters the template.
  *
  * @param array $data
  *   The template to be altered.
@@ -87,6 +87,19 @@ function hook_repec_archive_mapping_alter(array &$data) {
  * @ingroup repec
  */
 function hook_repec_template_alter(array &$data, ContentEntityInterface $entity) {
+}
+
+/**
+ * Alters the template for a specific series.
+ *
+ * @param array $data
+ *   The template to be altered.
+ * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+ *   The content entity to be used for altering the template.
+ *
+ * @ingroup repec
+ */
+function hook_repec_template_SERIES_alter(array &$data, ContentEntityInterface $entity) {
 }
 
 /**

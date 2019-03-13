@@ -568,6 +568,7 @@ EOF;
     }
 
     $this->moduleHandler->alter('repec_template', $template, $entity);
+    $this->moduleHandler->alter("repec_template_{$series_type}", $template, $entity);
 
     return $template;
   }
