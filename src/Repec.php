@@ -610,7 +610,7 @@ EOF;
   /**
    * {@inheritdoc}
    */
-  public function createEntityTemplate(ContentEntityInterface $entity, $templateType) {
+  public function createEntityTemplate(ContentEntityInterface $entity) {
     /** @var array $template */
     $template = $this->getEntityTemplate($entity);
 
@@ -630,7 +630,7 @@ EOF;
    */
   public function updateEntityTemplate(ContentEntityInterface $entity, $templateType) {
     // Barely re-create the entity template.
-    $this->createEntityTemplate($entity, $templateType);
+    $this->createEntityTemplate($entity);
   }
 
   /**
