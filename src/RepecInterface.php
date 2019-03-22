@@ -101,10 +101,8 @@ interface RepecInterface {
    *
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity that is the subject of the template.
-   * @param int $templateType
-   *   The template type.
    */
-  public function createEntityTemplate(ContentEntityInterface $entity, $templateType);
+  public function createEntityTemplate(ContentEntityInterface $entity);
 
   /**
    * Updates a RePEc template.

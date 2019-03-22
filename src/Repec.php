@@ -10,6 +10,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\file\Entity\File;
+use Drupal\repec\Series\BaseInterface;
 
 /**
  * Class Repec.
@@ -610,7 +611,7 @@ EOF;
   /**
    * {@inheritdoc}
    */
-  public function createEntityTemplate(ContentEntityInterface $entity, $templateType) {
+  public function createEntityTemplate(ContentEntityInterface $entity) {
     /** @var array $template */
     $template = $this->getEntityTemplate($entity);
 
@@ -630,7 +631,7 @@ EOF;
    */
   public function updateEntityTemplate(ContentEntityInterface $entity, $templateType) {
     // Barely re-create the entity template.
-    $this->createEntityTemplate($entity, $templateType);
+    $this->createEntityTemplate($entity);
   }
 
   /**
@@ -798,10 +799,10 @@ EOF;
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity for the template class.
    *
-   * @return \Drupal\repec\Series\Base
+   * @return \Drupal\repec\Series\BaseInterface
    *   The template class.
    */
-  private function getTemplateClass($series_type, ContentEntityInterface $entity) {
+  private function getTemplateClass($series_type, ContentEntityInterface $entity) : BaseInterface {
     if (!$this->templateClass) {
       $this->templateClass = $this->templateFactory->create($series_type, $entity);
     }
