@@ -188,7 +188,7 @@ EOF;
     $url .= '/' . $this->settings->get('archive_code') . '/';
     return [
       [
-        'attribute' => 'Template-type',
+        'attribute' => 'Template-Type',
         'value' => 'ReDIF-Archive 1.0',
       ],
       [
