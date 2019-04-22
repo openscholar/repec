@@ -67,7 +67,7 @@ final class TemplateFactory {
     /** @var \Drupal\Core\Config\ImmutableConfig $repec_settings */
     $repec_settings = $this->configFactory->get('repec.settings');
     /** @var array|null $bundle_settings */
-    $bundle_settings = unserialize($repec_settings->get("repec_bundle.{$entity->getEntityTypeId()}.{$entity->bundle()}"));
+    $bundle_settings = unserialize($repec_settings->get("repec_bundle.{$entity->getEntityTypeId()}.{$entity->bundle()}"), ['array']);
     return new $template_class($repec_settings, $this->entityTypeManager, $this->messenger, $entity, $bundle_settings);
   }
 
