@@ -586,7 +586,9 @@ EOF;
     $entity_bundle_settings = $this->getEntityBundleSettings('all', $entity->getEntityTypeId(), $entity->bundle());
 
     if ($this->shouldCreateSeriesTemplate($entity_bundle_settings)) {
-      $template = $this->getSeriesTemplate($entity_bundle_settings, $this->templateClass->getSeriesType());
+      /** @var \Drupal\repec\Series\BaseInterface $template_class */
+      $template_class = $this->getTemplateClass($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
+      $template = $this->getSeriesTemplate($entity_bundle_settings, $template_class->getSeriesType());
       $this->appendTemplate($template, RepecInterface::TEMPLATE_SERIES);
     }
   }
