@@ -604,7 +604,7 @@ EOF;
       $content .= $item['attribute'] . ': ' . $item['value'] . "\n";
     }
 
-    if (!file_put_contents($directory . '/' . $fileName, $content . PHP_EOL, FILE_APPEND)) {
+    if (!\file_put_contents($directory . '/' . $fileName, $content . PHP_EOL, FILE_APPEND)) {
       $this->messenger->addError(t('File @file_name could not be created', [
         '@file_name' => $fileName,
       ]));
