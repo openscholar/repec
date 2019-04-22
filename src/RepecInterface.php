@@ -84,7 +84,7 @@ interface RepecInterface {
    * Creates a template or re-creates it if it exists.
    *
    * The scope of this template is site wide: generic templates like
-   * archive or series.
+   * archive.
    *
    * @param array $template
    *   RDF template.
@@ -216,5 +216,18 @@ interface RepecInterface {
    *   List of entity bundle default settings.
    */
   public function getEntityBundleSettingDefaults();
+
+  /**
+   * Append a template to an already existing template.
+   *
+   * Creates a new template if it doesn't exists.
+   * This should be used for series templates.
+   *
+   * @param array $template
+   *   RDF template.
+   * @param string $templateType
+   *   Template type.
+   */
+  public function appendTemplate(array $template, $templateType): void;
 
 }

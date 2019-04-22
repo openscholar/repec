@@ -585,7 +585,25 @@ EOF;
     /** @var array $entity_bundle_settings */
     $entity_bundle_settings = $this->getEntityBundleSettings('all', $entity->getEntityTypeId(), $entity->bundle());
     $template = $this->getSeriesTemplate($entity_bundle_settings, $this->templateClass->getSeriesType());
-    $this->createTemplate($template, RepecInterface::TEMPLATE_SERIES);
+    $this->appendTemplate($template, RepecInterface::TEMPLATE_SERIES);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function appendTemplate(array $template, $templateType): void {
+    $directory = $this->getArchiveDirectory();
+    $fileName = $this->settings->get('archive_code') . $templateType . '.rdf';
+    $content = '';
+    foreach ($template as $item) {
+      $content .= $item['attribute'] . ': ' . $item['value'] . "\n";
+    }
+
+    if (!file_put_contents($directory . '/' . $fileName, $content . PHP_EOL, FILE_APPEND)) {
+      $this->messenger->addError(t('File @file_name could not be created', [
+        '@file_name' => $fileName,
+      ]));
+    }
   }
 
   /**
