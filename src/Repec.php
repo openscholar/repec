@@ -134,7 +134,6 @@ class Repec implements RepecInterface {
 
       // Site wide templates.
       $this->createArchiveTemplate();
-      $this->createSeriesTemplate();
       $this->allowDirectoryIndex();
 
       // @todo extend to other entity types
@@ -183,12 +182,12 @@ EOF;
   public function getArchiveTemplate() {
     // @todo use hook_repec_archive_mapping
     $url = $this->settings->get('provider_homepage');
-    $url .= '/sites/default/files';
-    $url .= '/' . $this->settings->get('base_path');
+    $url .= file_url_transform_relative(file_create_url('public://'));
+    $url .= $this->settings->get('base_path');
     $url .= '/' . $this->settings->get('archive_code') . '/';
     return [
       [
-        'attribute' => 'Template-type',
+        'attribute' => 'Template-Type',
         'value' => 'ReDIF-Archive 1.0',
       ],
       [
@@ -222,17 +221,16 @@ EOF;
   /**
    * {@inheritdoc}
    */
-  public function getSeriesTemplate() {
+  public function getSeriesTemplate(array $entity_bundle_settings, $type): array {
     // @todo use hook_repec_series_mapping
     return [
       [
-        'attribute' => 'Template-type',
+        'attribute' => 'Template-Type',
         'value' => 'ReDIF-Series 1.0',
       ],
       [
         'attribute' => 'Name',
-        // @todo get from bundle series configuration.
-        'value' => 'Working Paper',
+        'value' => $entity_bundle_settings['serie_name'],
       ],
       [
         'attribute' => 'Provider-Name',
@@ -256,13 +254,11 @@ EOF;
       ],
       [
         'attribute' => 'Type',
-        // @todo get from bundle series configuration.
-        'value' => 'ReDIF-Paper',
+        'value' => $type,
       ],
       [
         'attribute' => 'Handle',
-        // @todo get from bundle series configuration.
-        'value' => 'RePEc:' . $this->settings->get('archive_code') . ':wpaper',
+        'value' => "RePEc:{$this->settings->get('archive_code')}:{$entity_bundle_settings['serie_type']}",
       ],
     ];
   }
@@ -585,9 +581,34 @@ EOF;
   /**
    * {@inheritdoc}
    */
-  public function createSeriesTemplate() {
-    $template = $this->getSeriesTemplate();
-    $this->createTemplate($template, RepecInterface::TEMPLATE_SERIES);
+  public function createSeriesTemplate(ContentEntityInterface $entity) {
+    /** @var array $entity_bundle_settings */
+    $entity_bundle_settings = $this->getEntityBundleSettings('all', $entity->getEntityTypeId(), $entity->bundle());
+
+    if ($this->shouldCreateSeriesTemplate($entity_bundle_settings)) {
+      /** @var \Drupal\repec\Series\BaseInterface $template_class */
+      $template_class = $this->getTemplateClass($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
+      $template = $this->getSeriesTemplate($entity_bundle_settings, $template_class->getSeriesType());
+      $this->appendTemplate($template, RepecInterface::TEMPLATE_SERIES);
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function appendTemplate(array $template, $templateType): void {
+    $directory = $this->getArchiveDirectory();
+    $fileName = $this->settings->get('archive_code') . $templateType . '.rdf';
+    $content = '';
+    foreach ($template as $item) {
+      $content .= $item['attribute'] . ': ' . $item['value'] . "\n";
+    }
+
+    if (!\file_put_contents($directory . '/' . $fileName, $content . PHP_EOL, FILE_APPEND)) {
+      $this->messenger->addError(t('File @file_name could not be created', [
+        '@file_name' => $fileName,
+      ]));
+    }
   }
 
   /**
@@ -614,6 +635,7 @@ EOF;
   public function createEntityTemplate(ContentEntityInterface $entity) {
     /** @var array $template */
     $template = $this->getEntityTemplate($entity);
+    $this->createSeriesTemplate($entity);
 
     /** @var \Drupal\repec\Series\Base $template_class */
     $template_class = $this->getTemplateClass($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
@@ -808,6 +830,31 @@ EOF;
     }
 
     return $this->templateClass;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function shouldCreateSeriesTemplate(array $settings): bool {
+    $directory = $this->getArchiveDirectory();
+    $file_name = "{$this->settings->get('archive_code')}seri.rdf";
+    /** @var string $real_path */
+    $real_path = $this->fileSystem->realpath("$directory/$file_name");
+    $is_file_exists = \file_exists($real_path);
+
+    if (!$is_file_exists) {
+      return TRUE;
+    }
+
+    $content = \file_get_contents($real_path);
+
+    if (FALSE === $content) {
+      return FALSE;
+    }
+
+    // Series template creation is decided by checking whether the series name
+    // is already present in the template.
+    return !(\strpos($content, "Name: {$settings['serie_name']}") !== FALSE);
   }
 
 }

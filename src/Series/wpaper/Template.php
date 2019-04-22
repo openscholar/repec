@@ -23,4 +23,11 @@ class Template extends Base {
     return $default;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function getSeriesType(): string {
+    return 'ReDIF-Paper';
+  }
+
 }

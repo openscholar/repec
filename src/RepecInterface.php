@@ -48,10 +48,15 @@ interface RepecInterface {
   /**
    * Maps the series template to the bundle(s) configuration.
    *
+   * @param array $entity_bundle_settings
+   *   Entity bundle settings.
+   * @param string $type
+   *   Series type to be used in template.
+   *
    * @return array
    *   RDF template.
    */
-  public function getSeriesTemplate();
+  public function getSeriesTemplate(array $entity_bundle_settings, $type): array;
 
   /**
    * Maps a template to an entity based on its bundle configuration.
@@ -79,7 +84,7 @@ interface RepecInterface {
    * Creates a template or re-creates it if it exists.
    *
    * The scope of this template is site wide: generic templates like
-   * archive or series.
+   * archive.
    *
    * @param array $template
    *   RDF template.
@@ -90,8 +95,11 @@ interface RepecInterface {
 
   /**
    * Creates a series template.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity that is going to be used to generate the template.
    */
-  public function createSeriesTemplate();
+  public function createSeriesTemplate(ContentEntityInterface $entity);
 
   /**
    * Creates a RePEc template.
@@ -208,5 +216,29 @@ interface RepecInterface {
    *   List of entity bundle default settings.
    */
   public function getEntityBundleSettingDefaults();
+
+  /**
+   * Append a template to an already existing template.
+   *
+   * Creates a new template if it doesn't exists.
+   * This should be used for series templates.
+   *
+   * @param array $template
+   *   RDF template.
+   * @param string $templateType
+   *   Template type.
+   */
+  public function appendTemplate(array $template, $templateType): void;
+
+  /**
+   * Determines if series template should be created.
+   *
+   * @param array $settings
+   *   Entity bundle settings.
+   *
+   * @return bool
+   *   TRUE if yes, otherwise FALSE.
+   */
+  public function shouldCreateSeriesTemplate(array $settings): bool;
 
 }
