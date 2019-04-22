@@ -230,4 +230,15 @@ interface RepecInterface {
    */
   public function appendTemplate(array $template, $templateType): void;
 
+  /**
+   * Determines if series template should be created.
+   *
+   * @param array $settings
+   *   Entity bundle settings.
+   *
+   * @return bool
+   *   TRUE if yes, otherwise FALSE.
+   */
+  public function shouldCreateSeriesTemplate(array $settings): bool;
+
 }

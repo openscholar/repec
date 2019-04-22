@@ -584,8 +584,11 @@ EOF;
   public function createSeriesTemplate(ContentEntityInterface $entity) {
     /** @var array $entity_bundle_settings */
     $entity_bundle_settings = $this->getEntityBundleSettings('all', $entity->getEntityTypeId(), $entity->bundle());
-    $template = $this->getSeriesTemplate($entity_bundle_settings, $this->templateClass->getSeriesType());
-    $this->appendTemplate($template, RepecInterface::TEMPLATE_SERIES);
+
+    if ($this->shouldCreateSeriesTemplate($entity_bundle_settings)) {
+      $template = $this->getSeriesTemplate($entity_bundle_settings, $this->templateClass->getSeriesType());
+      $this->appendTemplate($template, RepecInterface::TEMPLATE_SERIES);
+    }
   }
 
   /**
@@ -825,6 +828,31 @@ EOF;
     }
 
     return $this->templateClass;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function shouldCreateSeriesTemplate(array $settings): bool {
+    $directory = $this->getArchiveDirectory();
+    $file_name = "{$this->settings->get('archive_code')}seri.rdf";
+    /** @var string $real_path */
+    $real_path = $this->fileSystem->realpath("$directory/$file_name");
+    $is_file_exists = \file_exists($real_path);
+
+    if (!$is_file_exists) {
+      return TRUE;
+    }
+
+    $content = \file_get_contents($real_path);
+
+    if (FALSE === $content) {
+      return FALSE;
+    }
+
+    // Series template creation is decided by checking whether the series name
+    // is already present in the template.
+    return !(\strpos($content, "Name: {$settings['serie_name']}") !== FALSE);
   }
 
 }
