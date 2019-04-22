@@ -48,10 +48,15 @@ interface RepecInterface {
   /**
    * Maps the series template to the bundle(s) configuration.
    *
+   * @param array $entity_bundle_settings
+   *   Entity bundle settings.
+   * @param string $type
+   *   Series type to be used in template.
+   *
    * @return array
    *   RDF template.
    */
-  public function getSeriesTemplate();
+  public function getSeriesTemplate(array $entity_bundle_settings, $type): array;
 
   /**
    * Maps a template to an entity based on its bundle configuration.
@@ -90,8 +95,11 @@ interface RepecInterface {
 
   /**
    * Creates a series template.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity that is going to be used to generate the template.
    */
-  public function createSeriesTemplate();
+  public function createSeriesTemplate(ContentEntityInterface $entity);
 
   /**
    * Creates a RePEc template.

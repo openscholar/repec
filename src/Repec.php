@@ -134,7 +134,6 @@ class Repec implements RepecInterface {
 
       // Site wide templates.
       $this->createArchiveTemplate();
-      $this->createSeriesTemplate();
       $this->allowDirectoryIndex();
 
       // @todo extend to other entity types
@@ -222,17 +221,16 @@ EOF;
   /**
    * {@inheritdoc}
    */
-  public function getSeriesTemplate() {
+  public function getSeriesTemplate(array $entity_bundle_settings, $type): array {
     // @todo use hook_repec_series_mapping
     return [
       [
-        'attribute' => 'Template-type',
+        'attribute' => 'Template-Type',
         'value' => 'ReDIF-Series 1.0',
       ],
       [
         'attribute' => 'Name',
-        // @todo get from bundle series configuration.
-        'value' => 'Working Paper',
+        'value' => $entity_bundle_settings['serie_name'],
       ],
       [
         'attribute' => 'Provider-Name',
@@ -256,13 +254,11 @@ EOF;
       ],
       [
         'attribute' => 'Type',
-        // @todo get from bundle series configuration.
-        'value' => 'ReDIF-Paper',
+        'value' => $type,
       ],
       [
         'attribute' => 'Handle',
-        // @todo get from bundle series configuration.
-        'value' => 'RePEc:' . $this->settings->get('archive_code') . ':wpaper',
+        'value' => "RePEc:{$this->settings->get('archive_code')}:{$entity_bundle_settings['serie_type']}",
       ],
     ];
   }
@@ -585,8 +581,10 @@ EOF;
   /**
    * {@inheritdoc}
    */
-  public function createSeriesTemplate() {
-    $template = $this->getSeriesTemplate();
+  public function createSeriesTemplate(ContentEntityInterface $entity) {
+    /** @var array $entity_bundle_settings */
+    $entity_bundle_settings = $this->getEntityBundleSettings('all', $entity->getEntityTypeId(), $entity->bundle());
+    $template = $this->getSeriesTemplate($entity_bundle_settings, $this->templateClass->getSeriesType());
     $this->createTemplate($template, RepecInterface::TEMPLATE_SERIES);
   }
 
@@ -614,6 +612,7 @@ EOF;
   public function createEntityTemplate(ContentEntityInterface $entity) {
     /** @var array $template */
     $template = $this->getEntityTemplate($entity);
+    $this->createSeriesTemplate($entity);
 
     /** @var \Drupal\repec\Series\Base $template_class */
     $template_class = $this->getTemplateClass($this->getEntityBundleSettings('serie_type', $entity->getEntityTypeId(), $entity->bundle()), $entity);
