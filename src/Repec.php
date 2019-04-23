@@ -324,8 +324,13 @@ EOF;
         ];
         break;
 
-      // @todo creation date fallback to entity created date
-      // @todo date format
+      case 'creation_date':
+        $result[] = [
+          'attribute' => $attribute_name,
+          'value' => date('Y-m-d', $this->getDefaultAttributeValue($fieldValue)),
+        ];
+        break;
+
       default:
         // Default to single valued attribute mapping.
         $result[] = [
