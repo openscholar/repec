@@ -135,13 +135,6 @@ class Repec implements RepecInterface {
       // Site wide templates.
       $this->createArchiveTemplate();
       $this->allowDirectoryIndex();
-
-      // @todo extend to other entity types
-      foreach ($this->getEnabledEntityTypeBundles('node_type') as $nodeType) {
-        // @todo create templates for existing entities, for each content type
-        // $entityIds = $this->entityTypeManager
-        // ->getStorage($nodeType)->loadMultiple();
-      }
     }
     else {
       $this->messenger->addError(t('Directory @path could not be created.', [

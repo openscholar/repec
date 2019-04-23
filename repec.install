@@ -13,3 +13,12 @@ function repec_uninstall() {
   $repec = \Drupal::service('repec');
   file_unmanaged_delete_recursive($repec->getArchiveDirectory());
 }
+
+/**
+ * Implements hook_install().
+ */
+function repec_install() {
+  /** @var \Drupal\repec\RepecInterface $repec */
+  $repec = \Drupal::service('repec');
+  $repec->initializeTemplates();
+}
