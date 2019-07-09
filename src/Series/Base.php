@@ -76,10 +76,12 @@ abstract class Base implements BaseInterface {
    * {@inheritdoc}
    */
   public function getDefault() : array {
+    // Get html title field and strip html tags.
+    $title = strip_tags($this->entity->html_title->value);
     return [
       [
         'attribute' => 'Title',
-        'value' => $this->entity->label(),
+        'value' => $title,
       ],
       [
         'attribute' => 'Number',
