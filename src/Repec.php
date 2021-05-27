@@ -122,7 +122,7 @@ class Repec implements RepecInterface {
 
     $archiveDirectory = $this->getArchiveDirectory();
     if (!empty($archiveDirectory) &&
-      file_prepare_directory($archiveDirectory, FILE_CREATE_DIRECTORY)) {
+      $this->fileSystem->prepareDirectory($archiveDirectory, FileSystemInterface::CREATE_DIRECTORY)) {
       // Remove all files of type .rdf.
       // @todo use Drupal file system unlink
       $files = glob($this->getArchiveDirectory() . '/*.rdf');
