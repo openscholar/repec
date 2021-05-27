@@ -7,6 +7,7 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\File\FileSystemInterface;
 
 /**
  * Base structure for templating classes.
@@ -51,6 +52,13 @@ abstract class Base implements BaseInterface {
   protected $bundleSettings;
 
   /**
+   * Drupal\Core\File\FileSystemInterface definition.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
    * Base constructor.
    *
    * @param \Drupal\Core\Config\ImmutableConfig $settings
@@ -63,13 +71,16 @@ abstract class Base implements BaseInterface {
    *   The entity.
    * @param array|null $bundle_settings
    *   Bundle specific setting in repec settings.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   File system service.
    */
-  public function __construct(ImmutableConfig $settings, EntityTypeManagerInterface $entity_type_manager, MessengerInterface $messenger, ContentEntityInterface $entity, array $bundle_settings) {
+  public function __construct(ImmutableConfig $settings, EntityTypeManagerInterface $entity_type_manager, MessengerInterface $messenger, ContentEntityInterface $entity, array $bundle_settings, FileSystemInterface $file_system) {
     $this->settings = $settings;
     $this->entityTypeManager = $entity_type_manager;
     $this->messenger = $messenger;
     $this->entity = $entity;
     $this->bundleSettings = $bundle_settings;
+    $this->fileSystem = $file_system;
   }
 
   /**
@@ -107,7 +118,7 @@ abstract class Base implements BaseInterface {
 
     $directory = "{$archive_directory}{$serie_directory_config}/";
 
-    if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+    if (!$this->fileSystem->prepareDirectory($directory, FileSystemInterface::CREATE_DIRECTORY)) {
       throw new CreateException($this->t('Directory @path could not be created.', [
         '@path' => $directory,
       ]));
