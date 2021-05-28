@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\repec\Series\Base;
 use Drupal\repec\Series\BaseInterface;
+use Drupal\Core\File\FileSystemInterface;
 
 /**
  * TemplateFactory.
@@ -36,6 +37,13 @@ final class TemplateFactory {
   protected $messenger;
 
   /**
+   * Drupal\Core\File\FileSystemInterface definition.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
    * TemplateFactory constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -45,10 +53,11 @@ final class TemplateFactory {
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   Messenger.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, MessengerInterface $messenger) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, ConfigFactoryInterface $config_factory, MessengerInterface $messenger, FileSystemInterface $file_system) {
     $this->configFactory = $config_factory;
     $this->entityTypeManager = $entity_type_manager;
     $this->messenger = $messenger;
+    $this->fileSystem = $file_system;
   }
 
   /**
@@ -68,7 +77,7 @@ final class TemplateFactory {
     $repec_settings = $this->configFactory->get('repec.settings');
     /** @var array|null $bundle_settings */
     $bundle_settings = unserialize($repec_settings->get("repec_bundle.{$entity->getEntityTypeId()}.{$entity->bundle()}"), ['array']);
-    return new $template_class($repec_settings, $this->entityTypeManager, $this->messenger, $entity, $bundle_settings);
+    return new $template_class($repec_settings, $this->entityTypeManager, $this->messenger, $entity, $bundle_settings, $this->fileSystem);
   }
 
 }
