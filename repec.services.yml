@@ -1,7 +1,7 @@
 services:
   template_factory:
     class: Drupal\repec\TemplateFactory
-    arguments: ['@entity_type.manager', '@config.factory', '@messenger']
+    arguments: ['@entity_type.manager', '@config.factory', '@messenger', '@file_system']
   repec:
     class: Drupal\repec\Repec
     arguments: ['@entity_type.manager', '@file_system', '@config.factory', '@messenger', '@template_factory', '@module_handler']
